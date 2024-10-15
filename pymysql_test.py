@@ -1,6 +1,7 @@
 #!/usr/home/mb17/database_work/backend/bin/python3
 
 import pymysql.cursors
+import get_password
 """
 Assumes the following table has been created already:
     CREATE TABLE `users` (
@@ -21,7 +22,8 @@ def read_password(path):
         exit()
 
 def main():
-    password = read_password("./.password")
+    #password = read_password("./.password")
+    password = get_password.main()
     connection = pymysql.connect(host='localhost',
                                  user='root',
                                  password=password,
