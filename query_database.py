@@ -124,7 +124,14 @@ def get_queries(queried, fieldDict):
 ########################################################
 
 def sanitize_query(queryDict):
-    query = "SELECT * FROM {table} WHERE".format(table=TABLE)
+    query = "SELECT * FROM '{table}' WHERE ".format(table=TABLE)
+    length = len(queryDict)
+    for key in queryDict:
+        if length == 0:
+            query += "'{field}'='{query}'AND ".format(field=key, query=queryDict[key])
+        else:
+            query += "'{field}'='{query}'".format(field=key, query=queryDict[key])
+            length -= 1
     print(query)
 
 def main():
