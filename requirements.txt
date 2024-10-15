@@ -1,0 +1,7 @@
+astropy==6.1.4
+astropy-iers-data==0.2024.10.14.0.32.55
+numpy==2.1.2
+packaging==24.1
+pyerfa==2.0.1.4
+PyMySQL==1.1.1
+PyYAML==6.0.2
