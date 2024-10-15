@@ -10,7 +10,7 @@
 #######################################
 
 ########################################################
-# Function:
+# Name:
 # Purpose:
 # Arguments:
 # Return:
@@ -54,16 +54,14 @@ def connect():
 
 def get_fields(connection):
     queryBy = []
-    with connection:
-        with connection.cursor() as cursor:
-            sql = "DESCRIBE " + TABLE
-            cursor.execute(sql)
-            indexList = cursor.fetchall()
-            print(indexList)
-            for indexDict in indexList:
-                #print(indexDict["Field"])
-                queryBy.append((indexDict["Field"], indexDict["Type"]))
-            return queryBy
+    with connection.cursor() as cursor:
+        sql = "DESCRIBE " + TABLE
+        cursor.execute(sql)
+        indexList = cursor.fetchall()
+        print(indexList)
+        for indexDict in indexList:
+            queryBy.append((indexDict["Field"], indexDict["Type"]))
+        return queryBy
 
 ########################################################
 # Name: map_query_list
@@ -82,7 +80,7 @@ def map_query_list(queryList):
     return fieldDict
 
 ########################################################
-# Function: welcome_message
+# Name: welcome_message
 # Purpose: Gives a welcome message to users, and displays options to query the table
 # Arguments: fieldDict (Dict); queriable fields from DB
 # Return: queried (List); list of fields the user want to query
@@ -98,7 +96,7 @@ def welcome_message(fieldDict):
     return queried
 
 ########################################################
-# Function: get_queries
+# Name: get_queries
 # Purpose: Takes the list of queried rows, and asks the data that is actually queried
 # Arguments: queried (list)
 # Return: queryDict (Dict; "field": "query_to_be_made")
@@ -117,22 +115,38 @@ def get_queries(queried, fieldDict):
 
 
 ########################################################
-# Function: sanitize_query
+# Name: sanitize_query
 # Purpose: Takes users query inputs and sanitizes it into one string for the actual query
 # Arguments: queryDict(dictionary; ("field": "query_to_be_made")
 # Return: query (string; a sanitized query for sql)
 ########################################################
 
 def sanitize_query(queryDict):
-    query = "SELECT * FROM '{table}' WHERE ".format(table=TABLE)
+    query = "SELECT * FROM {table} WHERE ".format(table=TABLE)
     length = len(queryDict)
     for key in queryDict:
-        if length == 0:
-            query += "'{field}'='{query}'AND ".format(field=key, query=queryDict[key])
+        if length != 1:
+            query += "'{field}'='{query}' AND ".format(field=key, query=queryDict[key])
+            length -=1
         else:
             query += "'{field}'='{query}'".format(field=key, query=queryDict[key])
-            length -= 1
     print(query)
+    return query
+
+########################################################
+# Name: execute_query 
+# Purpose: executes the query that was given in sanitize_query
+# Arguments: query (string), connection (cursorDict)
+# Return: result (Dict from cursorDict)
+########################################################
+
+def execute_query(query, connection):
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            indexList = cursor.fetchall()
+            print (indexList)
+
 
 def main():
     connection = connect()
@@ -140,7 +154,8 @@ def main():
     fieldDict = map_query_list(queryList)
     queried = welcome_message(fieldDict)
     queryDict = get_queries(queried, fieldDict)
-    sanitize_query(queryDict)
+    query = sanitize_query(queryDict)
+    execute_query(query, connection)
 
 if __name__ == "__main__":
     main()
