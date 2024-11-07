@@ -10,12 +10,25 @@ def getFiles():
     output = output.decode("utf-8")
     return output
 
+
+
 def returnFitsData(file_location):
     with fits.open(file_location) as hdul:
         hdu = hdul[0]
-        fits_data = dict(bitpix = hdu.header["bitpix"], naxis1 = hdu.header["naxis1"], naxis2 = hdu.header["naxis2"], heavenly_object = hdu.header["object"], gain = hdu.header["gain"], camera_filter = hdu.header["filter"], date_obs = hdu.header["date-obs"], frametype = hdu.header["frametyp"], temp = hdu.header["ccd-temp"], ypixsz = hdu.header["ypixsz"], xpixsz = hdu.header["xpixsz"], exptime = hdu.header["exptime"], detector = hdu.header["instrume"])
+        fits_data = dict(bitpix = hdu.header["bitpix"],
+                         naxis1 = hdu.header["naxis1"],
+                         naxis2 = hdu.header["naxis2"],
+                         heavenly_object = hdu.header["object"],
+                         gain = hdu.header["gain"],
+                         camera_filter = hdu.header["filter"],
+                         date_obs = hdu.header["date-obs"],
+                         frametype = hdu.header["frametyp"],
+                         temp = hdu.header["ccd-temp"],
+                         ypixsz = hdu.header["ypixsz"],
+                         xpixsz = hdu.header["xpixsz"],
+                         exptime = hdu.header["exptime"],
+                         detector = hdu.header["instrume"])
     return fits_data
-
 
 
 def main():

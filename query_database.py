@@ -17,7 +17,6 @@
 ########################################################
 
 import get_password
-import read_files
 import pymysql.cursors
 
 
@@ -88,10 +87,34 @@ def map_query_list(queryList):
 
 def welcome_message(fieldDict):
     print("Welcome to UMBC's Observatory Data Quierier.\n")
-    print("Enter the number associated with the field you would like to query (if you would like to query more than one field enter multiple numbers separated by commas):")
+    print("Enter the number associated with the field you would like to query (if you would like to query more than one field enter multiple numbers separated by commas), or n to exit:")
     for key in fieldDict:
         print(key + ": " + fieldDict[key][0])
     queryFieldsInput = input()
+    length = len(queryFieldsInput)
+    if queryFieldsInput.lower() == "n":
+        print("Goodbye")
+        exit()
+    
+    #some "error handling"
+    if queryFieldsInput == "":
+        while true: 
+        queryFieldsInput = input("You've entered an empty field, please enter a list of numbers for the fields you want to query")
+    if queryFieldsInput[length-1] == ",":
+        while true:
+            badList  = input("Your list ended with a \",\". Did you mean add another item to query? (y/n) ")
+            if badList.lower() == "y":
+                newInput = input("Add more fields to query: ")
+                queryFieldsInput += newInput
+                break
+            elif badList.lower() == "n":
+                queryFieldsInput = queryFieldsInput[0:length - 2]
+                break
+            else:
+                continue
+
+
+
     queried = queryFieldsInput.split(",")
     return queried
 
@@ -117,6 +140,8 @@ def get_queries(queried, fieldDict):
 ########################################################
 # Name: sanitize_query
 # Purpose: Takes users query inputs and sanitizes it into one string for the actual query
+# Note*: Sanitize typically has a specific meaning with regards to queries, and making sure users can't commit sql injection...
+# ... Since I never allow for users to enter directly to the table, I need to worry about it less. 
 # Arguments: queryDict(dictionary; ("field": "query_to_be_made")
 # Return: query (string; a sanitized query for sql)
 ########################################################
@@ -125,7 +150,7 @@ def sanitize_query(queryDict):
     query = "SELECT * FROM {table} WHERE ".format(table=TABLE)
     length = len(queryDict)
     for key in queryDict:
-        if length != 1:
+        if length != 1: #technically this could be a problem if the user submitted 0 inputs, but the program fails before it gets to here, so I chose to leave it.
             query += "'{field}'='{query}' AND ".format(field=key, query=queryDict[key])
             length -=1
         else:
