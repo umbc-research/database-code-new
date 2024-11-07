@@ -5,6 +5,7 @@ import pymysql.cursors
 import subprocess
 import os
 import get_password
+import logging
 
 
 ## Global variables, needed to connect to database.
