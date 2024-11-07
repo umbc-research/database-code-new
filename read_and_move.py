@@ -4,6 +4,33 @@ from astropy.io import fits
 import pymysql.cursors
 import subprocess
 import os
+import get_password
+
+
+## Global variables, needed to connect to database.
+
+DATABASE = "test_table"
+TABLE = "fits_metadata"
+PASSWORD = get_password.main()
+HOST = "localhost"
+USER = "root"
+CHARSET = "utf8mb4"
+
+########################################################
+# Name: connect
+# Purpose: To allow for connection to the DB
+# Arguments: N/A
+# Return: connection (cursor.DictCursor)
+########################################################
+
+def connect():
+    connection = pymysql.connect(host=HOST,
+                                 user=USER,
+                                 password=PASSWORD,
+                                 database=DATABASE,
+                                 charset=CHARSET,
+                                 cursorclass=pymysql.cursors.DictCursor)
+    return connection
 
 #/mnt/STS -> short term storage, where files will be placed after sharpcap creates them
 #/mnt/LTS -> long term storage, where the files will be moved to and held for future querying 
@@ -18,7 +45,8 @@ def getFiles():
 def moveFiles(file_name):
     curr_file_location = "/mnt/STS/" + file_name
     long_term_file_location = "/mnt/LTS/" + file_name
-    os.replace(file_location, long_term_file_location
+    os.replace(file_location, long_term_file_location)
+    return long_term_file_location
 
 def returnFitsData(file_location):
     with fits.open(file_location) as hdul:
@@ -36,19 +64,39 @@ def returnFitsData(file_location):
                          xpixsz = hdu.header["xpixsz"],
                          exptime = hdu.header["exptime"],
                          detector = hdu.header["instrume"])
+        for key in fits_data:
+            if isinstance(fits_data[key], str):
+                fits_data[key] = fits_data[key].replace(" ","_").upper()
     return fits_data
+
+def ingestion(connection, file_location, fits_data):
+    with connection.cursor() as cursor:
+        #there's probably a better way to write this because this is horrible.
+        insert = """INSERT INTO {table} (path, bitpix, naxis1, naxis2, object, gain, filter, date_obs,
+        frametype, ccd_temp, xpixsz, ypixsz, exptime, detector) 
+        VALUES ('{path}', '{bitpix}', '{naxis1}', '{naxis2}', '{heavenly_object}', '{gain}', '{camera_filter}', '{date_obs}', '{frametype}', 
+        '{temp}', '{ypixsz}', '{xpixsz}', '{exptime}', '{detector}')""".format(
+                table=TABLE,path=file_location, bitpix=fits_data["bitpix"], naxis1=fits_data["naxis1"], naxis2=fits_data["naxis2"],
+                heavenly_object=fits_data["heavenly_object"], gain=fits_data["gain"], camera_filter=fits_data["camera_filter"],
+                date_obs=fits_data["date_obs"], frametype=fits_data["frametype"], temp=fits_data["temp"], ypixsz=fits_data["ypixsz"],
+                xpixsz=fits_data["xpixsz"], exptime=fits_data["exptime"], detector=fits_data["detector"]).replace("\n", "").replace("   ","")
+        print(insert)
+        cursor.execute(insert)
+        connection.commit()
+
 
 
 def main():
-    #hdul = fits.open("/mnt/data/hd163770_11Z_00010.fits")
+    connection = connect()
     file_list = getFiles()
     file_list = file_list.split()
     for file_name in file_list:
-        file_location = "/mnt/data/" + file_name
-        print(file_location)
+        #file_location = moveFiles(file_name)
+        file_location = "/mnt/STS/" + file_name
         fits_data = returnFitsData(file_location)
-        print(fits_data["heavenly_object"])
-        print(fits_data["exptime"])
+        ingestion(connection, file_location, fits_data)
+        #print(fits_data["heavenly_object"])
+        #print(fits_data["exptime"])
 
 if __name__ == "__main__":
     main()
