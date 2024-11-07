@@ -18,11 +18,11 @@
 
 import get_password
 import pymysql.cursors
-
+import pprint
 
 ## Global variables, needed to connect to database. 
 
-DATABASE = "obsstor_test"
+DATABASE = "test_table"
 TABLE = "fits_metadata"
 PASSWORD = get_password.main()
 HOST = "localhost"
@@ -99,7 +99,7 @@ def welcome_message(fieldDict):
     #some "error handling"
     if queryFieldsInput == "":
         while true: 
-        queryFieldsInput = input("You've entered an empty field, please enter a list of numbers for the fields you want to query")
+            queryFieldsInput = input("You've entered an empty field, please enter a list of numbers for the fields you want to query")
     if queryFieldsInput[length-1] == ",":
         while true:
             badList  = input("Your list ended with a \",\". Did you mean add another item to query? (y/n) ")
@@ -112,9 +112,6 @@ def welcome_message(fieldDict):
                 break
             else:
                 continue
-
-
-
     queried = queryFieldsInput.split(",")
     return queried
 
@@ -151,10 +148,10 @@ def sanitize_query(queryDict):
     length = len(queryDict)
     for key in queryDict:
         if length != 1: #technically this could be a problem if the user submitted 0 inputs, but the program fails before it gets to here, so I chose to leave it.
-            query += "'{field}'='{query}' AND ".format(field=key, query=queryDict[key])
+            query += "{field}='{query}' AND ".format(field=key, query=queryDict[key])
             length -=1
         else:
-            query += "'{field}'='{query}'".format(field=key, query=queryDict[key])
+            query += "{field}='{query}'".format(field=key, query=queryDict[key])
     print(query)
     return query
 
@@ -170,7 +167,9 @@ def execute_query(query, connection):
         with connection.cursor() as cursor:
             cursor.execute(query)
             indexList = cursor.fetchall()
-            print (indexList)
+            for index in indexList:
+                pprint.pp(index)
+                print("\n")
 
 
 def main():
@@ -181,6 +180,8 @@ def main():
     queryDict = get_queries(queried, fieldDict)
     query = sanitize_query(queryDict)
     execute_query(query, connection)
+
+
 
 if __name__ == "__main__":
     main()
