@@ -57,7 +57,7 @@ def get_fields(connection):
         sql = "DESCRIBE " + TABLE
         cursor.execute(sql)
         indexList = cursor.fetchall()
-        print(indexList)
+        #print(indexList)
         for indexDict in indexList:
             queryBy.append((indexDict["Field"], indexDict["Type"]))
         return queryBy

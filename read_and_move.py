@@ -3,7 +3,7 @@
 from astropy.io import fits
 import pymysql.cursors
 import subprocess
-import os
+import shutil
 import get_password
 import logging
 
@@ -16,6 +16,14 @@ PASSWORD = get_password.main()
 HOST = "localhost"
 USER = "root"
 CHARSET = "utf8mb4"
+
+
+logging.basicConfig(
+        filename="my_log.log",
+        filemode="a",
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 ########################################################
 # Name: connect
@@ -43,30 +51,42 @@ def getFiles():
     output = output.decode("utf-8")
     return output
 
+def checkFiles(file_name):
+    if not file_name.endswith(".fits"):
+        error = "File: {file} is not a fits file, it not be moved to LTS".format(file=file_name)
+        logging.error(error)
+        return None
+    else:
+        return file_name
+
 def moveFiles(file_name):
     curr_file_location = "/mnt/STS/" + file_name
     long_term_file_location = "/mnt/LTS/" + file_name
-    os.replace(file_location, long_term_file_location)
+    shutil.move(curr_file_location, long_term_file_location)
     return long_term_file_location
 
 def returnFitsData(file_location):
     with fits.open(file_location) as hdul:
         hdu = hdul[0]
-        fits_data = dict(bitpix = hdu.header["bitpix"],
-                         naxis1 = hdu.header["naxis1"],
-                         naxis2 = hdu.header["naxis2"],
-                         heavenly_object = hdu.header["object"],
-                         gain = hdu.header["gain"],
-                         camera_filter = hdu.header["filter"],
-                         date_obs = hdu.header["date-obs"],
-                         frametype = hdu.header["frametyp"],
-                         temp = hdu.header["ccd-temp"],
-                         ypixsz = hdu.header["ypixsz"],
-                         xpixsz = hdu.header["xpixsz"],
-                         exptime = hdu.header["exptime"],
-                         detector = hdu.header["instrume"])
+        fits_data = dict(bitpix = hdu.header.get("bitpix", None),
+                         naxis1 = hdu.header.get("naxis1", None),
+                         naxis2 = hdu.header.get("naxis2", None),
+                         heavenly_object = hdu.header.get("object", None),
+                         gain = hdu.header.get("gain", None),
+                         camera_filter = hdu.header.get("filter", None),
+                         date_obs = hdu.header.get("date-obs", None),
+                         frametype = hdu.header.get("frametyp", None),
+                         temp = hdu.header.get("ccd-temp", None),
+                         ypixsz = hdu.header.get("ypixsz", None),
+                         xpixsz = hdu.header.get("xpixsz", None),
+                         exptime = hdu.header.get("exptime", None),
+                         detector = hdu.header.get("instrume", None))
         for key in fits_data:
-            if isinstance(fits_data[key], str):
+            if fits_data[key] is None:
+                error = "File: {file} is missing the {missing_key} information. This data will not be ingested".format(file=file_location, missing_key=key)
+                logging.error(error)
+                return None
+            elif isinstance(fits_data[key], str):
                 fits_data[key] = fits_data[key].replace(" ","_").upper()
     return fits_data
 
@@ -92,12 +112,14 @@ def main():
     file_list = getFiles()
     file_list = file_list.split()
     for file_name in file_list:
-        #file_location = moveFiles(file_name)
-        file_location = "/mnt/STS/" + file_name
-        fits_data = returnFitsData(file_location)
-        ingestion(connection, file_location, fits_data)
-        #print(fits_data["heavenly_object"])
-        #print(fits_data["exptime"])
+        file_status = checkFiles(file_name)
+        if file_status != None:
+            temp_file_location = "/mnt/STS/" + file_name
+            fits_data = returnFitsData(temp_file_location)
+            if fits_data != None:
+                file_location = moveFiles(file_name)
+                ingestion(connection, file_location, fits_data)
+
 
 if __name__ == "__main__":
     main()

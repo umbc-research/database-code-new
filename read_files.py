@@ -5,7 +5,7 @@ import pymysql.cursors
 import subprocess
 
 def getFiles():
-    process = subprocess.Popen(["ls", "/mnt/data"], stdout=subprocess.PIPE)
+    process = subprocess.Popen(["ls", "/mnt/STS"], stdout=subprocess.PIPE)
     output, _ = process.communicate() #unpacks as tuple of stdout and stderr, but we don't care about errors
     output = output.decode("utf-8")
     return output
@@ -36,7 +36,7 @@ def main():
     file_list = getFiles()
     file_list = file_list.split()
     for i in file_list:
-        file_location = "/mnt/data/" + i
+        file_location = "/mnt/STS/" + i
         print(file_location)
         fits_data = returnFitsData(file_location)
         print(fits_data["heavenly_object"])
