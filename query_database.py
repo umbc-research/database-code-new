@@ -22,7 +22,7 @@ import pprint
 
 ## Global variables, needed to connect to database. 
 
-DATABASE = "test_table"
+DATABASE = "obs_data"
 TABLE = "fits_metadata"
 PASSWORD = get_password.main()
 HOST = "localhost"
@@ -150,6 +150,8 @@ def sanitize_query(queryDict):
         if length != 1: #technically this could be a problem if the user submitted 0 inputs, but the program fails before it gets to here, so I chose to leave it.
             query += "{field}='{query}' AND ".format(field=key, query=queryDict[key])
             length -=1
+        elif key == "date_obs":
+            query += "DATE({field}) = '{query}'".format(field=key, query=queryDict[key])
         else:
             query += "{field}='{query}'".format(field=key, query=queryDict[key])
     print(query)

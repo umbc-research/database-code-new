@@ -10,7 +10,7 @@ import logging
 
 ## Global variables, needed to connect to database.
 
-DATABASE = "test_table"
+DATABASE = "obs_data"
 TABLE = "fits_metadata"
 PASSWORD = get_password.main()
 HOST = "localhost"
@@ -19,7 +19,7 @@ CHARSET = "utf8mb4"
 
 
 logging.basicConfig(
-        filename="my_log.log",
+        filename="/mnt/STS/failure.txt",
         filemode="a",
         level=logging.DEBUG,
         format='%(asctime)s - %(levelname)s - %(message)s'
@@ -111,6 +111,7 @@ def main():
     connection = connect()
     file_list = getFiles()
     file_list = file_list.split()
+    file_list.remove("failure.txt")
     for file_name in file_list:
         file_status = checkFiles(file_name)
         if file_status != None:
